@@ -45,7 +45,15 @@ def convert_all_svgs_to_gcode(directory):
             svg_to_gcode(svg_file, gcode_file)
             print(f"Converted {svg_file} to {gcode_file}")
 
+def create_folder(directory):
+    try:
+        os.mkdir(directory)
+        print(f"Directory '{directory}' created successfully.")
+    except FileExistsError:
+        print(f"Directory '{directory}' already exists.")
 
+folder_name = "generated_files"
+create_folder(folder_name)
 separate_svg_layers('input.svg')
 convert_all_svgs_to_gcode('./generated_files/')
 
