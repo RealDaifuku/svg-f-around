@@ -1,40 +1,29 @@
-import xml.etree.ElementTree as ET
 import os
 from svgpathtools import svg2paths
 
-def separate_svg_layers(svg_file):
-    tree = ET.parse(svg_file)
-    root = tree.getroot()
-    layers = {}
-
-    for elem in root.iter():
-        if 'id' in elem.attrib:
-            elem_id = elem.attrib['id']
-            
-            if elem_id not in layers:
-                layers[elem_id] = ET.Element('svg', attrib={'xmlns': 'http://www.w3.org/2000/svg'})
-            
-            layers[elem_id].append(elem)
-
-    for layer_id, layer_root in layers.items():
-        layer_tree = ET.ElementTree(layer_root)
-        layer_tree.write(f'generated_files/{layer_id}.svg', encoding='utf-8', xml_declaration=True)
-
 def svg_to_gcode(svg_file, gcode_file):
+    # Parse SVG paths from the file
     paths, attributes = svg2paths(svg_file)
 
+    # Open the G-code file for writing
     with open(gcode_file, 'w') as f:
+        # Write G-code header
         f.write("G21 ; Set units to millimeters\n")
         f.write("G90 ; Use absolute coordinates\n")
         f.write("G1 F1000 ; Set feed rate\n")
         
+        # Process each path in the SVG file
         for path in paths:
+            # Iterate through each segment of the path
             for segment in path:
                 start = segment.start
                 end = segment.end
+                # Move to the start point of the segment
                 f.write(f"G0 X{start.real:.3f} Y{start.imag:.3f}\n")
+                # Draw the segment
                 f.write(f"G1 X{end.real:.3f} Y{end.imag:.3f}\n")
         
+        # Write G-code footer
         f.write("M2 ; End of program\n")
 
 def convert_all_svgs_to_gcode(directory):
@@ -45,11 +34,5 @@ def convert_all_svgs_to_gcode(directory):
             svg_to_gcode(svg_file, gcode_file)
             print(f"Converted {svg_file} to {gcode_file}")
 
-
-separate_svg_layers('input.svg')
-convert_all_svgs_to_gcode('./generated_files/')
-
-
-
-
-
+# Example usage
+convert_all_svgs_to_gcode('.')
